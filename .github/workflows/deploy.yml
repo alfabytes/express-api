@@ -12,7 +12,7 @@ jobs:
     - name: Check out the repo
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0 # Necessary to fetch all tags and history
+        fetch-depth: 0
 
     - name: Set up Node.js
       uses: actions/setup-node@v3
