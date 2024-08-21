@@ -1,4 +1,4 @@
-name: Build, Test, Scan, and Push Docker image to AWS ECR
+name: Deploy
 
 on:
   push:
