@@ -3,7 +3,7 @@ name: Build, Test, Scan, and Push Docker image to AWS ECR
 on:
   push:
     tags:
-      - 'v*.*.*'  # Matches tag pattern like v1.0.0
+      - 'v*.*.*'
 
 jobs:
   test:
