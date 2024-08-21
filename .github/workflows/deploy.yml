@@ -1,9 +1,8 @@
 name: Deploy
 
 on:
-  push:
-    tags:
-      - 'v*.*.*'
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   test:
@@ -25,7 +24,7 @@ jobs:
     - name: Run tests
       run: npm test
 
-  sonar-scan:
+  security-check:
     runs-on: ubuntu-latest
     needs: test
 
@@ -40,24 +39,13 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
-    needs: sonar-scan
+    needs: security-check
 
     steps:
     - name: Check out the repo
       uses: actions/checkout@v4
       with:
         fetch-depth: 0 # Necessary to fetch all tags and history
-
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
 
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
@@ -74,7 +62,7 @@ jobs:
       run: |
         echo "REPO_NAME=${GITHUB_REPOSITORY##*/}" >> $GITHUB_ENV
         echo "ECR_REGISTRY=$(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.ap-southeast-3.amazonaws.com" >> $GITHUB_ENV
-        echo "IMAGE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+        echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
     - name: Build Docker image
       run: |
@@ -117,7 +105,7 @@ jobs:
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region ap-southeast-3
-          aws ecr get-login-password --region ap-southeast-3 | docker login --username AWS --password-stdin 887254321648.dkr.ecr.ap-southeast-3.amazonaws.com
+          aws ecr get-login-password --region ap-southeast-3 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query 'Account' --output text).dkr.ecr.ap-southeast-3.amazonaws.com
           docker image prune -a -f
           docker compose pull
           docker compose up -d
