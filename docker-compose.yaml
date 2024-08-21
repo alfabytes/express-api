@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  express-api:
+    image: 887254321648.dkr.ecr.ap-southeast-3.amazonaws.com/express-api:latest
+    ports:
+      - "4001:3000"
+    environment:
+      NODE_ENV: production
+    networks:
+      - express-net
+
+networks:
+  express-net:
+    driver: bridge
